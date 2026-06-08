@@ -39,8 +39,9 @@ button {
 <body>
 
 <div id="panel">
-    <button onclick="getLocation()">現在地取得</button>
-    <span id="info">未取得</span>
+    <button onclick="startTracking()">追跡開始</button>
+    <button onclick="stopTracking()">追跡停止</button>
+    <span id="info">停止中</span>
 </div>
 
 <div id="map"></div>
@@ -57,6 +58,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let userMarker = null;
 let roadsLayer = null;
+let trackingId = null;
+let tracking = false;
 
 async function drawRoads() {
 
@@ -95,7 +98,48 @@ async function drawRoads() {
 
 drawRoads();
 
+
+ function startTracking() {
+
+    if (tracking) {
+        return;
+    }
+
+    tracking = true;
+
+    document.getElementById("info").innerText =
+    "GPS追跡中";
+
+    getLocation();
+
+    trackingId = setInterval(
+        getLocation,
+        5000
+    );
+}
+
+
+function stopTracking() {
+
+    if (!tracking) {
+            return;
+        }
+
+        clearInterval(
+            trackingId
+        );
+
+        tracking = false;
+
+        document.getElementById("info").innerText =
+            "停止中";
+    }
+
+        
+
+
 async function getLocation() {
+  
 
     if (!navigator.geolocation) {
         alert("GPS非対応です");
@@ -155,8 +199,8 @@ async function getLocation() {
             });
 
 
-            document.getElementById("info").innerText =
-                "国道: " +
+           document.getElementById("info").innerText =
+                "追跡中 | 国道: " +
                 nearestData.road +
                 " / 距離: " +
                 nearestData.distance.toFixed(1) +

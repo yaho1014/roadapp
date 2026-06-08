@@ -49,27 +49,23 @@ button {
 
 <script>
 
-// =========================
-// 地図初期化
-// =========================
 const map = L.map('map').setView([35.68, 139.76], 11);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
 }).addTo(map);
 
-// =========================
-// マーカー・レイヤー
-// =========================
 let userMarker = null;
 let roadsLayer = null;
 
-// =========================
-// 国道GeoJSON取得＆描画
-// =========================
-fetch("/roads")
-.then(res => res.json())
-.then(data => {
+async function drawRoads() {
+
+    const res = await fetch("/roads");
+    const data = await res.json();
+
+    if (roadsLayer) {
+        map.removeLayer(roadsLayer);
+    }
 
     roadsLayer = L.geoJSON(data, {
 
@@ -79,68 +75,95 @@ fetch("/roads")
 
             return {
                 color: isVisited ? "green" : "red",
-                weight: isVisited ? 4 : 2,
-                opacity: isVisited ? 1.0 : 0.6
+                weight: isVisited ? 5 : 2,
+                opacity: 1.0
             };
         },
 
         onEachFeature: function(feature, layer) {
 
-            layer.on("click", function() {
-
-                alert(
-                    "国道ID: " + feature.properties.unique_id + "\n" +
-                    "踏破: " + (feature.properties.visited ? "済み" : "未")
-                );
-
-            });
-
+            layer.bindPopup(
+                "路線: " + feature.properties.rosen_name +
+                "<br>リンクID: " + feature.properties.N13_008 +
+                "<br>踏破: " +
+                (feature.properties.visited ? "済" : "未")
+            );
         }
 
     }).addTo(map);
+}
 
-});
+drawRoads();
 
-// =========================
-// 現在地取得＋API呼び出し
-// =========================
-function getLocation() {
+async function getLocation() {
 
     if (!navigator.geolocation) {
         alert("GPS非対応です");
         return;
     }
 
-    navigator.geolocation.getCurrentPosition(async (pos) => {
+    navigator.geolocation.getCurrentPosition(
 
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
+        async function(pos) {
 
-        // マーカー更新
-        if (userMarker) {
-            map.removeLayer(userMarker);
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            if (userMarker) {
+                map.removeLayer(userMarker);
+            }
+
+            userMarker = L.marker([lat, lon]).addTo(map);
+
+            map.setView([lat, lon], 15);
+
+            const nearestRes = await fetch("/nearest", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    lat: lat,
+                    lon: lon
+                })
+            });
+
+            const nearestData = await nearestRes.json();
+
+            const visitRes = await fetch("/visit", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    lat: lat,
+                    lon: lon
+                })
+            });
+
+            await visitRes.json();
+
+            document.getElementById("info").innerText =
+                "国道: " +
+                nearestData.road +
+                " / 距離: " +
+                nearestData.distance.toFixed(1) +
+                "m";
+
+            await drawRoads();
+        },
+
+        function(err) {
+            alert("GPS取得失敗: " + err.message);
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
         }
-
-        userMarker = L.marker([lat, lon]).addTo(map);
-
-        map.setView([lat, lon], 14);
-
-        // 最寄り国道API
-        const res = await fetch("/nearest", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({lat, lon})
-        });
-
-        const data = await res.json();
-
-        document.getElementById("info").innerText =
-            `国道: ${data.road} / 距離: ${data.distance.toFixed(1)}m`;
-
-    });
-
+    );
 }
-
 </script>
 
 </body>

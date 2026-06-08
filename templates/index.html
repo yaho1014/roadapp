@@ -58,6 +58,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let userMarker = null;
 let roadsLayer = null;
+let gpsLayer = null;
 let trackingId = null;
 let tracking = false;
 
@@ -97,6 +98,7 @@ async function drawRoads() {
 }
 
 drawRoads();
+drawGpsLog();
 
 
  function startTracking() {
@@ -136,7 +138,32 @@ function stopTracking() {
     }
 
         
+async function drawGpsLog() {
 
+    const res = await fetch("/gps_log");
+    const data = await res.json();
+
+    if (gpsLayer) {
+        map.removeLayer(gpsLayer);
+    }
+
+    if (data.length < 2) {
+        return;
+    }
+
+    const latlngs = data.map(p => [
+        p.lat,
+        p.lon
+    ]);
+
+    gpsLayer = L.polyline(
+        latlngs,
+        {
+            color: "blue",
+            weight: 4
+        }
+    ).addTo(map);
+}
 
 async function getLocation() {
   
@@ -207,6 +234,7 @@ async function getLocation() {
                 "m";
 
             await drawRoads();
+await drawGpsLog();
         },
 
         function(err) {

@@ -16,6 +16,21 @@ with open(BASE / "roads.geojson", "r", encoding="utf-8") as f:
     roads_geojson = json.load(f)
 
 # =========================
+# リンクID生成
+# 路線番号_連番
+# =========================
+for i, feature in enumerate(
+    roads_geojson["features"],
+    start=1
+):
+    props = feature["properties"]
+
+    props["link_id"] = (
+        f"{props.get('rosen_name','0')}"
+        f"_{i:06d}"
+    )
+
+# =========================
 # visited.csv
 # =========================
 visited_file = BASE / "visited.csv"
@@ -54,7 +69,7 @@ def get_roads():
 
         props = feature.get("properties", {})
 
-        uid = str(props.get("N13_008", ""))
+        uid = str(props.get("link_id", ""))
 
         props["visited"] = uid in visited
 
@@ -147,10 +162,7 @@ def nearest():
             )
         ),
         "link_id": str(
-            nearest_link.get(
-                "N13_008",
-                ""
-            )
+            nearest_link["link_id"]
         ),
         "distance": dist
     })
@@ -173,10 +185,7 @@ def visit():
     )
 
     uid = str(
-        nearest_link.get(
-            "N13_008",
-            ""
-        )
+        nearest_link["link_id"]
     )
 
     visited = load_visited()

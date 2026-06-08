@@ -84,7 +84,7 @@ async function drawRoads() {
 
             layer.bindPopup(
                 "路線: " + feature.properties.rosen_name +
-                "<br>リンクID: " + feature.properties.N13_008 +
+                "<br>リンクID: " + feature.properties.link_id +
                 "<br>踏破: " +
                 (feature.properties.visited ? "済" : "未")
             );

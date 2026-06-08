@@ -143,6 +143,18 @@ async function getLocation() {
 
             await visitRes.json();
 
+            await fetch("/log", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    lat: lat,
+                    lon: lon
+                })
+            });
+
+
             document.getElementById("info").innerText =
                 "国道: " +
                 nearestData.road +

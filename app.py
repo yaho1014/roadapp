@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 import json
 from pathlib import Path
+from datetime import datetime
 
 from shapely.geometry import Point
 import geopandas as gpd
@@ -34,6 +35,7 @@ for i, feature in enumerate(
 # visited.csv
 # =========================
 visited_file = BASE / "visited.csv"
+gps_log_file = BASE / "gps_log.csv"
 
 
 def load_visited():
@@ -227,6 +229,64 @@ def stats():
         "visited_count": len(visited)
     })
 
+
+# =========================
+# GPSログ保存
+# =========================
+@app.route("/log", methods=["POST"])
+def log_position():
+
+    data = request.json
+
+    lat = data["lat"]
+    lon = data["lon"]
+
+    new_file = not gps_log_file.exists()
+
+    with open(
+        gps_log_file,
+        "a",
+        encoding="utf-8"
+    ) as f:
+
+        if new_file:
+            f.write(
+                "timestamp,lat,lon\n"
+            )
+
+        f.write(
+            f"{datetime.now().isoformat()},{lat},{lon}\n"
+        )
+
+    return jsonify({
+        "status": "ok"
+    })
+
+
+# =========================
+# GPSログ件数
+# =========================
+@app.route("/log_stats")
+def log_stats():
+
+    count = 0
+
+    if gps_log_file.exists():
+
+        with open(
+            gps_log_file,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            next(f, None)
+
+            for _ in f:
+                count += 1
+
+    return jsonify({
+        "count": count
+    })
 
 # =========================
 # 起動

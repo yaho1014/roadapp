@@ -2,7 +2,7 @@ from pathlib import Path
 import geopandas as gpd
 import json
 
-SHP_FILE = r"E:\ドキュメント\01_appdev\03_GISデータ\SHP\5339_test1_wgs84.shp"
+SHP_FILE = r"E:\ドキュメント\01_appdev\03_GISデータ\SHP\5339_test2_sinyuri_wgs84.shp"
 
 BASE = Path(__file__).parent
 OUT_FILE = BASE / "roads.geojson"

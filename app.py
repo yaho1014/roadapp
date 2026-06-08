@@ -217,6 +217,36 @@ def visit():
     })
 
 
+@app.route("/gps_log")
+def gps_log():
+
+    points = []
+
+    if gps_log_file.exists():
+
+        with open(
+            gps_log_file,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            next(f, None)
+
+            for line in f:
+
+                parts = line.strip().split(",")
+
+                if len(parts) != 3:
+                    continue
+
+                points.append({
+                    "lat": float(parts[1]),
+                    "lon": float(parts[2])
+                })
+
+    return jsonify(points)
+
+
 # =========================
 # 踏破数確認
 # =========================

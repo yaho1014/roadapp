@@ -41,6 +41,9 @@ button {
 <div id="panel">
     <button onclick="startTracking()">追跡開始</button>
     <button onclick="stopTracking()">追跡停止</button>
+    <button onclick="toggleFollow()" id="followBtn">
+    追従ON
+    </button>
     <span id="info">停止中</span>
     <span id="progress" style="margin-left:20px;">
     踏破率計算中...
@@ -64,6 +67,7 @@ let roadsLayer = null;
 let gpsLayer = null;
 let trackingId = null;
 let tracking = false;
+let followMode = true;
 
 async function drawRoads() {
 
@@ -135,6 +139,13 @@ updateProgress();
     );
 }
 
+function toggleFollow() {
+
+    followMode = !followMode;
+
+    document.getElementById("followBtn").innerText =
+        followMode ? "追従ON" : "追従OFF";
+}
 
 function stopTracking() {
 
@@ -210,7 +221,15 @@ async function getLocation() {
 
             userMarker = L.marker([lat, lon]).addTo(map);
 
-            map.setView([lat, lon], 15);
+            if (followMode) {
+
+                map.setView(
+                    [lat, lon],
+                    15
+                );
+
+            }
+
 
             const nearestRes = await fetch("/nearest", {
                 method: "POST",

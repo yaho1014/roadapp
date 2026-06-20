@@ -13,23 +13,20 @@ BASE = Path(__file__).parent
 # =========================
 # GeoJSON読み込み
 # =========================
-with open(BASE / "roads.geojson", "r", encoding="utf-8") as f:
-    roads_geojson = json.load(f)
+roads = gpd.read_file(
+    BASE / "roads_kanto_wbs84.gpkg",
+    layer="roads_kanto_wbs84"
+)
 
 # =========================
 # リンクID生成
 # 路線番号_連番
 # =========================
-for i, feature in enumerate(
-    roads_geojson["features"],
-    start=1
-):
-    props = feature["properties"]
+roads["link_id"] = [
+    f"{roads.iloc[i]['rosen_name']}_{i+1:06d}"
+    for i in range(len(roads))
+]
 
-    props["link_id"] = (
-        f"{props.get('rosen_name','0')}"
-        f"_{i:06d}"
-    )
 
 # =========================
 # visited.csv
@@ -65,17 +62,20 @@ def get_roads():
 
     visited = load_visited()
 
-    data = json.loads(json.dumps(roads_geojson))
+    data = json.loads(
+        roads.to_json()
+    )
 
     for feature in data["features"]:
 
-        props = feature.get("properties", {})
+        uid = feature["properties"].get(
+            "link_id",
+            ""
+        )
 
-        uid = str(props.get("link_id", ""))
-
-        props["visited"] = uid in visited
-
-        feature["properties"] = props
+        feature["properties"]["visited"] = (
+            uid in visited
+        )
 
     return data
 
@@ -83,11 +83,15 @@ def get_roads():
 # =========================
 # GeoDataFrame生成
 # =========================
-roads = gpd.GeoDataFrame.from_features(
-    roads_geojson["features"]
+roads = gpd.read_file(
+    BASE / "roads_kanto_wbs84.gpkg",
+    layer="roads_kanto_wbs84"
 )
 
-roads = roads.set_crs(4326)
+roads["link_id"] = [
+    f"{roads.iloc[i]['rosen_name']}_{i+1:06d}"
+    for i in range(len(roads))
+]
 
 roads_m = roads.to_crs(6677)
 
@@ -142,34 +146,29 @@ def roads_api():
     south = float(request.args.get("south"))
     north = float(request.args.get("north"))
 
-    data = get_roads()
+    subset = roads.cx[
+        west:east,
+        south:north
+    ]
 
-    features = []
+    data = json.loads(
+        subset.to_json()
+    )
+
+    visited = load_visited()
 
     for feature in data["features"]:
 
-        coords = feature["geometry"]["coordinates"]
+        uid = feature["properties"].get(
+            "link_id",
+            ""
+        )
 
-        keep = False
+        feature["properties"]["visited"] = (
+            uid in visited
+        )
 
-        for lon, lat in coords:
-
-            if (
-                west <= lon <= east
-                and
-                south <= lat <= north
-            ):
-                keep = True
-                break
-
-        if keep:
-            features.append(feature)
-
-    return jsonify({
-        "type": "FeatureCollection",
-        "features": features
-    })
-
+    return jsonify(data)
 
 # =========================
 # 最寄り道路取得

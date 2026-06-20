@@ -83,10 +83,10 @@ def get_roads():
 # =========================
 # GeoDataFrame生成
 # =========================
-roads = gpd.read_file(
-    BASE / "roads_kanto_wbs84.gpkg",
-    layer="roads_kanto_wbs84"
-)
+#roads = gpd.read_file(
+#    BASE / "roads_kanto_wbs84.gpkg",
+#    layer="roads_kanto_wbs84"
+#)
 
 roads["link_id"] = [
     f"{roads.iloc[i]['rosen_name']}_{i+1:06d}"

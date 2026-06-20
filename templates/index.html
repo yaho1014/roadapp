@@ -42,6 +42,9 @@ button {
     <button onclick="startTracking()">追跡開始</button>
     <button onclick="stopTracking()">追跡停止</button>
     <span id="info">停止中</span>
+    <span id="progress" style="margin-left:20px;">
+    踏破率計算中...
+    </span>
 </div>
 
 <div id="map"></div>
@@ -99,6 +102,7 @@ async function drawRoads() {
 
 drawRoads();
 drawGpsLog();
+updateProgress();
 
 
  function startTracking() {
@@ -163,6 +167,15 @@ async function drawGpsLog() {
             weight: 4
         }
     ).addTo(map);
+}
+
+async function updateProgress() {
+
+    const res = await fetch("/progress");
+    const data = await res.json();
+
+    document.getElementById("progress").innerText =
+        `踏破率 ${data.percent}% (${(data.visited_m/1000).toFixed(2)}km / ${(data.total_m/1000).toFixed(2)}km)`;
 }
 
 async function getLocation() {
@@ -235,6 +248,7 @@ async function getLocation() {
 
             await drawRoads();
 await drawGpsLog();
+await updateProgress();
         },
 
         function(err) {

@@ -91,6 +91,8 @@ roads = roads.set_crs(4326)
 
 roads_m = roads.to_crs(6677)
 
+roads_m["length_m"] = roads_m.length
+
 
 # =========================
 # 最寄りリンク検索
@@ -259,6 +261,37 @@ def stats():
         "visited_count": len(visited)
     })
 
+@app.route("/progress")
+def progress():
+
+    visited = load_visited()
+
+    total_length = roads_m["length_m"].sum()
+
+    visited_length = roads_m[
+        roads["link_id"].isin(visited)
+    ]["length_m"].sum()
+
+    percent = 0
+
+    if total_length > 0:
+        percent = (
+            visited_length
+            / total_length
+            * 100
+        )
+
+    return jsonify({
+        "visited_m": round(
+            float(visited_length), 1
+        ),
+        "total_m": round(
+            float(total_length), 1
+        ),
+        "percent": round(
+            float(percent), 1
+        )
+    })
 
 # =========================
 # GPSログ保存

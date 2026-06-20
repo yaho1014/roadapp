@@ -1,22 +1,44 @@
 from pathlib import Path
 import geopandas as gpd
 import json
+from tkinter import Tk, filedialog
 
-SHP_FILE = r"E:\ドキュメント\01_appdev\03_GISデータ\SHP\5339_test2_sinyuri_wgs84.shp"
+# =========================
+# SHP選択
+# =========================
+root = Tk()
+root.withdraw()
 
-BASE = Path(__file__).parent
-OUT_FILE = BASE / "roads.geojson"
+SHP_FILE = filedialog.askopenfilename(
+    title="Shapefileを選択",
+    filetypes=[("Shapefile", "*.shp")]
+)
 
+if not SHP_FILE:
+    print("ファイルが選択されませんでした")
+    exit()
+
+print("選択ファイル:", SHP_FILE)
+
+# =========================
+# 読み込み
+# =========================
 roads = gpd.read_file(SHP_FILE)
 
 # =========================
-# ★ 追加：属性チェック（先頭5件）
+# 属性確認
 # =========================
 print("\n===== 属性サンプル（先頭5行）=====")
-print(roads.head(5))
+print(roads.head())
 
 print("\n===== カラム一覧 =====")
 print(list(roads.columns))
+
+# =========================
+# GeoJSON出力先
+# =========================
+BASE = Path(__file__).parent
+OUT_FILE = BASE / "roads.geojson"
 
 # =========================
 # GeoJSON変換

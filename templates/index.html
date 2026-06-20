@@ -67,7 +67,12 @@ let tracking = false;
 
 async function drawRoads() {
 
-    const res = await fetch("/roads");
+    const bounds = map.getBounds();
+
+    const res = await fetch(
+        `/roads?west=${bounds.getWest()}&east=${bounds.getEast()}&south=${bounds.getSouth()}&north=${bounds.getNorth()}`
+    );
+
     const data = await res.json();
 
     if (roadsLayer) {
@@ -102,6 +107,12 @@ async function drawRoads() {
 
 drawRoads();
 drawGpsLog();
+    map.on("moveend", async () => {
+
+        await drawRoads();
+
+    });
+
 updateProgress();
 
 

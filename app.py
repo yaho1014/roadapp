@@ -137,9 +137,38 @@ def index():
 @app.route("/roads")
 def roads_api():
 
-    return jsonify(
-        get_roads()
-    )
+    west = float(request.args.get("west"))
+    east = float(request.args.get("east"))
+    south = float(request.args.get("south"))
+    north = float(request.args.get("north"))
+
+    data = get_roads()
+
+    features = []
+
+    for feature in data["features"]:
+
+        coords = feature["geometry"]["coordinates"]
+
+        keep = False
+
+        for lon, lat in coords:
+
+            if (
+                west <= lon <= east
+                and
+                south <= lat <= north
+            ):
+                keep = True
+                break
+
+        if keep:
+            features.append(feature)
+
+    return jsonify({
+        "type": "FeatureCollection",
+        "features": features
+    })
 
 
 # =========================
